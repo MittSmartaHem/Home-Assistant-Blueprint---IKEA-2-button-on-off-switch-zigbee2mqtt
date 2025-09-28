@@ -50,9 +50,16 @@ input:
 mode: restart
 max_exceeded: silent
 
+variables:
+  _remote: !input remote
+  _on_button_short: !input on_button_short
+  _off_button_short: !input off_button_short
+  _on_button_long: !input on_button_long
+  _off_button_long: !input off_button_long
+
 trigger:
   - platform: state
-    entity_id: !input remote
+    entity_id: "{{ _remote }}"
 
 action:
   - variables:
@@ -62,22 +69,22 @@ action:
       - alias: ON kort tryck
         conditions:
           - "{{ command == 'on' }}"
-        sequence: !input on_button_short
+        sequence: "{{ _on_button_short }}"
 
       - alias: OFF kort tryck
         conditions:
           - "{{ command == 'off' }}"
-        sequence: !input off_button_short
+        sequence: "{{ _off_button_short }}"
 
       - alias: ON långt tryck
         conditions:
           - "{{ command == 'brightness_move_up' }}"
-        sequence: !input on_button_long
+        sequence: "{{ _on_button_long }}"
 
       - alias: OFF långt tryck
         conditions:
           - "{{ command == 'brightness_move_down' }}"
-        sequence: !input off_button_long
+        sequence: "{{ _off_button_long }}"
 
       - alias: Okänt kommando
         conditions:
