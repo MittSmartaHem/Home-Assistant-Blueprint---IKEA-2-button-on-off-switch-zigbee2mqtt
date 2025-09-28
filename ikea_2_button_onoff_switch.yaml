@@ -1,0 +1,89 @@
+blueprint:
+  name: IKEA on/off-switch (Zigbee2MQTT)
+  description: >
+    Version 1.0.0 — Styr valfria funktioner med IKEA E1743 on/off-knapp via Zigbee2MQTT.
+    Stöd för kort och lång tryckning på ON/OFF. Välj rätt sensor från MQTT-integrationen.
+
+    Inga helpers krävs — all logik är intern.
+  domain: automation
+  author: MittSmartaHem
+  homeassistant:
+    min_version: 2024.6.0
+
+input:
+  remote:
+    name: Zigbee2MQTT-enhet
+    description: Välj sensorn som representerar IKEA-knappen (via MQTT)
+    selector:
+      entity:
+        integration: mqtt
+        domain: sensor
+
+  on_button_short:
+    name: ON kort tryck
+    description: Vad ska hända vid kort tryck på ON
+    default: []
+    selector:
+      action: {}
+
+  off_button_short:
+    name: OFF kort tryck
+    description: Vad ska hända vid kort tryck på OFF
+    default: []
+    selector:
+      action: {}
+
+  on_button_long:
+    name: ON långt tryck
+    description: Vad ska hända vid långt tryck på ON (brightness up)
+    default: []
+    selector:
+      action: {}
+
+  off_button_long:
+    name: OFF långt tryck
+    description: Vad ska hända vid långt tryck på OFF (brightness down)
+    default: []
+    selector:
+      action: {}
+
+mode: restart
+max_exceeded: silent
+
+trigger:
+  - platform: state
+    entity_id: !input remote
+
+action:
+  - variables:
+      command: "{{ trigger.to_state.state }}"
+
+  - choose:
+      - alias: ON kort tryck
+        conditions:
+          - "{{ command == 'on' }}"
+        sequence: !input on_button_short
+
+      - alias: OFF kort tryck
+        conditions:
+          - "{{ command == 'off' }}"
+        sequence: !input off_button_short
+
+      - alias: ON långt tryck
+        conditions:
+          - "{{ command == 'brightness_move_up' }}"
+        sequence: !input on_button_long
+
+      - alias: OFF långt tryck
+        conditions:
+          - "{{ command == 'brightness_move_down' }}"
+        sequence: !input off_button_long
+
+      - alias: Okänt kommando
+        conditions:
+          - "{{ command not in ['on', 'off', 'brightness_move_up', 'brightness_move_down'] }}"
+        sequence:
+          - service: logbook.log
+            data:
+              name: IKEA-knapp
+              message: "Okänt kommando: {{ command }}"
